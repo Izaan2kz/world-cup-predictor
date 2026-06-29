@@ -34,25 +34,6 @@ Match data is downloaded automatically on first run from [martj42/international_
      ...
 ```
 
-## Head-to-Head Example
-
-```
-> Argentina vs France
-
-🇦🇷 Argentina  (Elo 2209)    vs    🇫🇷 France  (Elo 2222)
---------------------------------------------------------
-Argentina win :  35.4%
-Draw      :  27.5%
-France win:  37.2%
-Expected goals : Argentina 1.13 — 1.17 France
-Most likely score : 1-1  (Argentina — France)
-Most likely decisive : 0-1  (Argentina — France)
-
-If knockout → ET & penalties:
-  Argentina advances :  48.3%
-  France advances :  51.7%
-```
-
 ## Commands
 
 | Command | Description |
@@ -81,6 +62,3 @@ If knockout → ET & penalties:
 - **Penalties**: Elo-weighted probability (divisor 600) instead of 50/50
 - **Simulations**: 10,000 full tournaments with `np.random.seed(42)` for reproducibility
 
-## Data Source
-
-[martj42/international_results](https://github.com/martj42/international_results) — international football results from 1872 to present.
