@@ -73,14 +73,17 @@ R16_PAIRS = [(73, 74), (75, 76), (77, 78), (79, 80), (81, 82), (83, 84), (85, 86
 STAGES = ["group_exit", "r32", "r16", "quarters", "semis", "final", "champion"]
 
 
-def download_data():
-    DATA_FILES = ["results.csv", "goalscorers.csv", "shootouts.csv", "former_names.csv"]
+def download_data(force=False):
+    from datetime import datetime
+    DATA_FILES = ["results.csv"]
     BASE_URL = "https://raw.githubusercontent.com/martj42/international_results/master/"
     for fname in DATA_FILES:
-        if not os.path.exists(fname):
+        if force or not os.path.exists(fname):
             print(f"Downloading {fname}...")
             r = requests.get(BASE_URL + fname)
             r.raise_for_status()
             with open(fname, "wb") as f:
                 f.write(r.content)
             print(f"Saved {fname}")
+    mod_time = datetime.fromtimestamp(os.path.getmtime("results.csv"))
+    print(f"Data last updated: {mod_time.strftime('%Y-%m-%d %H:%M')}")

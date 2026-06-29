@@ -10,14 +10,17 @@ sys.dont_write_bytecode = True
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
 
+import numpy as np
+from scipy.stats import poisson
 from tabulate import tabulate
 
 from worldcup2026 import ALL_TEAMS, FLAG_EMOJI, download_data
 from elo import compute_elo_and_model
-from simulation import predict_match, simulate_match, run_full_simulation
+from simulation import predict_match, simulate_match, run_full_simulation, R32_TEAMS
 
-# Download data if needed
-download_data()
+# Download data (--update forces re-download)
+force_update = "--update" in sys.argv
+download_data(force=force_update)
 
 # Build ratings and model
 elo, team_elo, model, lambda_cache = compute_elo_and_model()
@@ -49,10 +52,19 @@ def print_h2h(ta, tb):
     print(f"Most likely score : {best_score}  ({ta} — {tb})")
 
     if top5[0][0] == top5[0][1]:
-        for goals_a, goals_b, prob in top5[1:]:
-            if goals_a != goals_b:
-                print(f"Most likely decisive : {goals_a}-{goals_b}  ({ta} — {tb})")
-                break
+        draw_goals = top5[0][0]
+        et_la, et_lb = la * 0.25, lb * 0.25
+        et_pa = np.array([poisson.pmf(i, et_la) for i in range(5)])
+        et_pb = np.array([poisson.pmf(j, et_lb) for j in range(5)])
+        et_matrix = np.outer(et_pa, et_pb)
+        np.fill_diagonal(et_matrix, 0)
+        et_flat = et_matrix.flatten()
+        et_best = np.argmax(et_flat)
+        et_ga, et_gb = et_best // 5, et_best % 5
+        total_a = int(draw_goals + et_ga)
+        total_b = int(draw_goals + et_gb)
+        print(f"Most likely after ET : {total_a}-{total_b}  ({ta} — {tb})")
+
         ko_a, _, ko_b, _, _, _, _ = simulate_match(model, elo, ta, tb, neutral=True, n=10000, allow_draw=False)
         print(f"\nIf knockout → ET & penalties:")
         print(f"  {ta} advances : {ko_a:5.1f}%")

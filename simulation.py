@@ -204,22 +204,105 @@ def _run_tournament(elo, lambda_cache):
     return results
 
 
+ACTUAL_R32 = [
+    ("Germany", "Paraguay"),           # M1
+    ("France", "Sweden"),              # M2
+    ("South Africa", "Canada"),        # M3
+    ("Netherlands", "Morocco"),        # M4
+    ("Portugal", "Croatia"),           # M5
+    ("Spain", "Austria"),              # M6
+    ("USA", "Bosnia and Herzegovina"), # M7
+    ("Belgium", "Senegal"),            # M8
+    ("Brazil", "Japan"),               # M9
+    ("Côte d'Ivoire", "Norway"),       # M10
+    ("Mexico", "Ecuador"),             # M11
+    ("England", "Congo DR"),           # M12
+    ("Argentina", "Cabo Verde"),       # M13
+    ("Australia", "Egypt"),            # M14
+    ("Switzerland", "Algeria"),        # M15
+    ("Colombia", "Ghana"),             # M16
+]
+
+R32_TEAMS = set()
+for a, b in ACTUAL_R32:
+    R32_TEAMS.add(a)
+    R32_TEAMS.add(b)
+
+KO_STAGES = ["r32", "r16", "quarters", "semis", "final", "champion"]
+
+
+def _run_knockout_tournament(elo, lambda_cache):
+    results = {t: "r32" for t in R32_TEAMS}
+
+    # R32
+    r32_winners = []
+    for ta, tb in ACTUAL_R32:
+        r32_winners.append(_sim_knockout(ta, tb, elo, lambda_cache))
+
+    for t in r32_winners:
+        results[t] = "r16"
+
+    # R16
+    r16_winners = []
+    for i in range(0, 16, 2):
+        r16_winners.append(_sim_knockout(r32_winners[i], r32_winners[i + 1], elo, lambda_cache))
+
+    for t in r16_winners:
+        if results[t] == "r16":
+            results[t] = "quarters"
+
+    # QF
+    qf_winners, qf_losers = [], []
+    for i in range(0, 8, 2):
+        winner = _sim_knockout(r16_winners[i], r16_winners[i + 1], elo, lambda_cache)
+        loser = r16_winners[i + 1] if winner == r16_winners[i] else r16_winners[i]
+        qf_winners.append(winner)
+        qf_losers.append(loser)
+
+    for t in qf_winners:
+        if results[t] == "quarters":
+            results[t] = "semis"
+
+    # SF
+    sf_winners, sf_losers = [], []
+    for i in range(0, 4, 2):
+        winner = _sim_knockout(qf_winners[i], qf_winners[i + 1], elo, lambda_cache)
+        loser = qf_winners[i + 1] if winner == qf_winners[i] else qf_winners[i]
+        sf_winners.append(winner)
+        sf_losers.append(loser)
+
+    for t in sf_winners:
+        if results[t] == "semis":
+            results[t] = "final"
+
+    # 3rd place
+    _sim_knockout(sf_losers[0], sf_losers[1], elo, lambda_cache)
+
+    # Final
+    champion = _sim_knockout(sf_winners[0], sf_winners[1], elo, lambda_cache)
+    results[champion] = "champion"
+    return results
+
+
 def run_full_simulation(elo, team_elo, lambda_cache, n_sims=10000):
-    print(f"\nRunning {n_sims:,} tournament simulations...")
+    print(f"\nRunning {n_sims:,} knockout simulations from actual R32 bracket...")
     np.random.seed(42)
-    counts = {t: {s: 0 for s in STAGES} for t in ALL_TEAMS}
+    counts = {t: {s: 0 for s in KO_STAGES} for t in R32_TEAMS}
 
     for _ in trange(n_sims):
-        res = _run_tournament(elo, lambda_cache)
+        res = _run_knockout_tournament(elo, lambda_cache)
         for t, stage in res.items():
             counts[t][stage] += 1
 
     rows = []
     for t in ALL_TEAMS:
-        c = counts[t]
-        champ = c["champion"] / (n_sims / 100)
-        final = (c["champion"] + c["final"]) / (n_sims / 100)
-        semi = (c["champion"] + c["final"] + c["semis"]) / (n_sims / 100)
+        if t in R32_TEAMS:
+            c = counts[t]
+            champ = c["champion"] / (n_sims / 100)
+            final = (c["champion"] + c["final"]) / (n_sims / 100)
+            semi = (c["champion"] + c["final"] + c["semis"]) / (n_sims / 100)
+        else:
+            champ, final, semi = 0.0, 0.0, 0.0
         rows.append((t, round(team_elo[t]), champ, final, semi))
 
     rows.sort(key=lambda x: x[2], reverse=True)
