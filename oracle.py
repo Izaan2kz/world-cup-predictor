@@ -71,7 +71,7 @@ def print_h2h(ta, tb):
         print(f"  {tb} advances : {ko_b:5.1f}%")
 
 
-print("\nHead-to-head predictor. Enter two teams, e.g. Brazil vs France")
+print("\nHead-to-head predictor. Enter two teams, e.g. Argentina vs Portugal")
 print("Commands: titles | teams | quit")
 
 while True:
