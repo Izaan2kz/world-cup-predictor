@@ -28,7 +28,7 @@ elo, team_elo, model, lambda_cache = compute_elo_and_model()
 # Run tournament simulation
 table_data = run_full_simulation(elo, team_elo, lambda_cache)
 
-print("\n" + tabulate(table_data, headers=["Rank", "Team", "Elo", "Champion%", "Final%", "Semi%"],
+print("\n" + tabulate(table_data, headers=["Rank", "Team", "Elo", "Elo#", "Champion%", "Final%", "Semi%"],
                        tablefmt="simple"))
 
 
@@ -86,7 +86,7 @@ while True:
     if low == "quit":
         break
     if low == "titles":
-        print("\n" + tabulate(table_data, headers=["Rank", "Team", "Elo", "Champion%", "Final%", "Semi%"],
+        print("\n" + tabulate(table_data, headers=["Rank", "Team", "Elo", "Elo#", "Champion%", "Final%", "Semi%"],
                                tablefmt="simple"))
         continue
     if low == "teams":
