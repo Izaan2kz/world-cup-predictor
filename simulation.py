@@ -305,7 +305,7 @@ def run_full_simulation(elo, team_elo, lambda_cache, n_sims=10000):
             champ, final, semi = 0.0, 0.0, 0.0
         rows.append((t, round(team_elo[t]), champ, final, semi))
 
-    rows.sort(key=lambda x: x[2], reverse=True)
+    rows.sort(key=lambda x: (x[2], x[1]), reverse=True)
     table_data = []
     for i, (t, e, ch, fi, se) in enumerate(rows, 1):
         table_data.append([i, t, e, f"{ch:.1f}%", f"{fi:.1f}%", f"{se:.1f}%"])
